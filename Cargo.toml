@@ -49,5 +49,9 @@ name = "web"
 path = "src/web/main.rs"
 
 [[bin]]
+name = "hotcrp"
+path = "src/web/hotcrp.rs"
+
+[[bin]]
 name = "vote"
 path = "benchmarks/vote.rs"
