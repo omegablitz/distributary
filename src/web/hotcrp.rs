@@ -46,31 +46,28 @@ fn main() {
         g.incorporate(new("see_authors", &["uid", "pid"], false, Union::new(emits)));
 
     // a given review can be seen by a) the chairs; b) the reviewer; and c) the authors *if* the
-    // reviews have been released. let's construct a view for c.
-    let j = JoinBuilder::new(vec![(review, 0), (authored, 1), (authored, 0), (authored, 3)])
+    // reviews have been released. let's construct a view for c).
+    let avr = JoinBuilder::new(vec![(review, 0), (authored, 1), (authored, 0), (authored, 3)])
         .from(authored, vec![0, 1])
         .join(review, vec![0, 0, 1, 0]);
-    let visible_reviews =
-        g.incorporate(new("visible_reviews", &["rid", "pid", "uid", "status"], true, j)
-            .having(vec![shortcut::Condition {
-                             column: 3,
-                             cmp: shortcut::Comparison::Equal(shortcut::Value::Const("accepted"
-                                 .into())), // should be != pending
-                         }]));
-    // and then the policy view
+    let avr = new("author_visible_reviews",
+                  &["rid", "pid", "uid", "status"],
+                  true,
+                  avr);
+    let avr = avr.having(vec![shortcut::Condition {
+                                  column: 3,
+                                  cmp: shortcut::Comparison::Equal(shortcut::Value::Const("accepted"
+                                      .into())), // should be != pending
+                              }]);
+    let author_visible_reviews = g.incorporate(avr);
+
+    // now, we can construct the complete view for who can see which reviews
     let mut emits = HashMap::new();
     // emits.insert(chairs, vec![0, 1]); we need chairs * review -- ugh
     emits.insert(review, vec![0, 1]);
-    emits.insert(visible_reviews, vec![0, 2]);
+    emits.insert(author_visible_reviews, vec![0, 2]);
     let can_see_review =
         g.incorporate(new("see_review", &["uid", "rid"], false, Union::new(emits)));
-
-    // chairs, reviewers, and authors can see papers
-    let mut emits = HashMap::new();
-    emits.insert(author, vec![0, 1]);
-    emits.insert(chairs, vec![0, 1]);
-    emits.insert(review, vec![1, 2]);
-    let can_see_paper = g.incorporate(new("see_paper", &["uid", "pid"], false, Union::new(emits)));
 
     // visible reviews for a given user
     let j = JoinBuilder::new(vec![(can_see_review, 0),
@@ -85,20 +82,22 @@ fn main() {
                                             true,
                                             j));
 
-    // "my" reviews should also show paper title
-    // TODO: we'd really like to restrict this to viewer == uid, but not good way to do so
-    let j = JoinBuilder::new(vec![(visible_reviews, 0),
-                                  (visible_reviews, 1),
-                                  (visible_reviews, 2),
-                                  (paper, 0),
-                                  (visible_reviews, 4),
-                                  (paper, 1)])
-        .from(visible_reviews, vec![0, 0, 0, 1])
+    // let's also give a list of what papers each user can see
+    // chairs, reviewers, and authors can see papers
+    let mut emits = HashMap::new();
+    emits.insert(author, vec![0, 1]);
+    emits.insert(chairs, vec![0, 1]);
+    emits.insert(review, vec![1, 2]);
+    let can_see_paper = g.incorporate(new("see_paper", &["uid", "pid"], false, Union::new(emits)));
+
+    // join with papers to get titles
+    let j = JoinBuilder::new(vec![(can_see_paper, 0), (paper, 0), (paper, 1), (paper, 2)])
+        .from(can_see_paper, vec![0, 1])
         .join(paper, vec![1, 0, 0, 0]);
-    let my_reviews = g.incorporate(new("my_reviews",
-                                       &["viewer", "rid", "uid", "pid", "content", "title"],
-                                       true,
-                                       j));
+    let visible_papers = g.incorporate(new("visible_papers",
+                                           &["uid", "pid", "title", "status"],
+                                           true,
+                                           j));
 
 
     // run it!
