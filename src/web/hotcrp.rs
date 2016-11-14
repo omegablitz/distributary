@@ -99,9 +99,9 @@ fn main() {
                                            true,
                                            j));
 
-
     // run it!
-    web::run(g).unwrap();
+    println!("{}", g);
+    // web::run(g).unwrap();
 }
 
 #[cfg(not(feature="web"))]
