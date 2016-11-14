@@ -47,11 +47,11 @@ fn main() {
 
     // a given review can be seen by a) the chairs; b) the reviewer; and c) the authors *if* the
     // reviews have been released. let's construct a view for c.
-    let j = JoinBuilder::new(vec![(authored, 0), (authored, 1), (review, 0), (authored, 3)])
+    let j = JoinBuilder::new(vec![(review, 0), (authored, 1), (authored, 0), (authored, 3)])
         .from(authored, vec![0, 1])
         .join(review, vec![0, 0, 1, 0]);
     let visible_reviews =
-        g.incorporate(new("visible_reviews", &["uid", "pid", "rid", "status"], true, j)
+        g.incorporate(new("visible_reviews", &["rid", "pid", "uid", "status"], true, j)
             .having(vec![shortcut::Condition {
                              column: 3,
                              cmp: shortcut::Comparison::Equal(shortcut::Value::Const("accepted"
@@ -60,7 +60,7 @@ fn main() {
     // and then the policy view
     let mut emits = HashMap::new();
     // emits.insert(chairs, vec![0, 1]); we need chairs * review -- ugh
-    emits.insert(review, vec![1, 0]);
+    emits.insert(review, vec![0, 1]);
     emits.insert(visible_reviews, vec![0, 2]);
     let can_see_review =
         g.incorporate(new("see_review", &["uid", "rid"], false, Union::new(emits)));
