@@ -50,11 +50,13 @@ fn main() {
     let j = JoinBuilder::new(vec![(authored, 0), (authored, 1), (review, 0), (authored, 3)])
         .from(authored, vec![0, 1])
         .join(review, vec![0, 0, 1, 0]);
-    let visible_reviews = g.incorporate(new("visible_reviews", &["uid", "pid", "rid", "status"], true, j)
-        .having(vec![distributary::Query::new(&[true, true, true], vec![shortcut::Condition{
-            column: 3,
-            cmp: shortcut::Comparison::Equal(shortcut::Value::Const("acccepted")) // should be != pending
-        }])]));
+    let visible_reviews =
+        g.incorporate(new("visible_reviews", &["uid", "pid", "rid", "status"], true, j)
+            .having(vec![shortcut::Condition {
+                             column: 3,
+                             cmp: shortcut::Comparison::Equal(shortcut::Value::Const("accepted"
+                                 .into())), // should be != pending
+                         }]));
     // and then the policy view
     let mut emits = HashMap::new();
     // emits.insert(chairs, vec![0, 1]); we need chairs * review -- ugh
