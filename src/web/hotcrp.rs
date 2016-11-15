@@ -32,10 +32,15 @@ fn main() {
     let authored = g.incorporate(new("authored", &["uid", "pid", "title", "status"], true, j));
 
     // chairs should have at least as much access as authors to all papers
-    let j = JoinBuilder::new(vec![(user, 0), (paper, 0)])
+    let chairs = JoinBuilder::new(vec![(user, 0), (paper, 0), (user, 4)])
         .from(user, vec![0, 0, 0, 0, 0])
         .join(paper, vec![0, 0, 0, 0]);
-    let chairs = g.incorporate(new("chairs", &["uid", "pid"], true, j));
+    let chairs = new("chairs", &["uid", "pid", "is_chair"], true, chairs);
+    let chairs = chairs.having(vec![shortcut::Condition {
+                         column: 2,
+                         cmp: shortcut::Comparison::Equal(shortcut::Value::Const(1.into())),
+                     }]);
+    let chairs = g.incorporate(chairs);
 
     // let's define some security policies too
     // chairs and authors can see author lists
