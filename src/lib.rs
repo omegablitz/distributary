@@ -308,7 +308,6 @@
 //! propagating the `Update` since there are no descendant views.
 //!
 #![feature(optin_builtin_traits)]
-#![feature(ptr_eq)]
 #![feature(mpsc_select)]
 #![feature(pub_restricted)]
 #![feature(conservative_impl_trait)]
@@ -341,6 +340,8 @@ extern crate tarpc;
 extern crate futures;
 #[cfg(feature="b_netsoup")]
 extern crate tokio_core;
+
+extern crate chashmap;
 
 mod checktable;
 mod flow;

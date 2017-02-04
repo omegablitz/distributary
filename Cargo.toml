@@ -15,6 +15,7 @@ itertools = "0.5"
 petgraph = "0.4"
 regex = "0.1"
 fnv = "1.0"
+chashmap = "0.1.2"
 
 spmc = "0.2.1"
 nom_sql = { git = "https://github.com/ms705/nom-sql.git" }
